@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BandaBazaar hyperlocal grocery delivery API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: stores
+    description: Store operations
+  - name: products
+    description: Product operations
+  - name: orders
+    description: Order operations
+  - name: admin
+    description: Admin operations
+  - name: customers
+    description: Customer operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +34,768 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── STORES ──────────────────────────────────────────────────────────────────
+
+  /stores:
+    get:
+      operationId: listStores
+      tags: [stores]
+      summary: List all approved stores
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of stores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Store"
+    post:
+      operationId: createStore
+      tags: [stores]
+      summary: Register a new store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStoreBody"
+      responses:
+        "201":
+          description: Store created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+
+  /stores/{storeId}:
+    get:
+      operationId: getStore
+      tags: [stores]
+      summary: Get a store by ID
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+    put:
+      operationId: updateStore
+      tags: [stores]
+      summary: Update store info
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStoreBody"
+      responses:
+        "200":
+          description: Updated store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+
+  /stores/{storeId}/stats:
+    get:
+      operationId: getStoreStats
+      tags: [stores]
+      summary: Get earnings and order stats for a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Store stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreStats"
+
+  # ─── PRODUCTS ─────────────────────────────────────────────────────────────────
+
+  /stores/{storeId}/products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products for a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Add a product to a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductBody"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /stores/{storeId}/products/{productId}:
+    put:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductBody"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── ORDERS ──────────────────────────────────────────────────────────────────
+
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders (all, or filtered by store/customer phone)
+      parameters:
+        - name: storeId
+          in: query
+          schema:
+            type: integer
+        - name: customerPhone
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Place a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderBody"
+      responses:
+        "201":
+          description: Order placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get order by ID
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+    put:
+      operationId: updateOrderStatus
+      tags: [orders]
+      summary: Update order status
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderStatusBody"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{orderId}/rating:
+    post:
+      operationId: rateOrder
+      tags: [orders]
+      summary: Rate an order after delivery
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RateOrderBody"
+      responses:
+        "200":
+          description: Rating saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  # ─── ADMIN ───────────────────────────────────────────────────────────────────
+
+  /admin/stores:
+    get:
+      operationId: adminListStores
+      tags: [admin]
+      summary: Admin — list all stores (any status)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of all stores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Store"
+
+  /admin/stores/{storeId}/approve:
+    post:
+      operationId: approveStore
+      tags: [admin]
+      summary: Approve a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Store approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+
+  /admin/stores/{storeId}/reject:
+    post:
+      operationId: rejectStore
+      tags: [admin]
+      summary: Reject a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Store rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+
+  /admin/stores/{storeId}/block:
+    post:
+      operationId: blockStore
+      tags: [admin]
+      summary: Block/unblock a store
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockStoreBody"
+      responses:
+        "200":
+          description: Store updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [admin]
+      summary: Admin dashboard summary (total orders, earnings, commissions)
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  /admin/commissions:
+    get:
+      operationId: listCommissions
+      tags: [admin]
+      summary: List all commission records per order
+      parameters:
+        - name: storeId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Commission records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Commission"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    Store:
+      type: object
+      required: [id, name, ownerPhone, address, category, status, isOpen, minOrderAmount, commissionRate, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ownerPhone:
+          type: string
+        address:
+          type: string
+        category:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, approved, rejected, blocked]
+        isOpen:
+          type: boolean
+        deliveryTimeMinutes:
+          type: integer
+        rating:
+          type: number
+          nullable: true
+        totalRatings:
+          type: integer
+        minOrderAmount:
+          type: number
+        commissionRate:
+          type: number
+        createdAt:
+          type: string
+
+    CreateStoreBody:
+      type: object
+      required: [name, ownerPhone, address, category]
+      properties:
+        name:
+          type: string
+        ownerPhone:
+          type: string
+        address:
+          type: string
+        category:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        minOrderAmount:
+          type: number
+        deliveryTimeMinutes:
+          type: integer
+
+    UpdateStoreBody:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        category:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        isOpen:
+          type: boolean
+        minOrderAmount:
+          type: number
+        deliveryTimeMinutes:
+          type: integer
+
+    StoreStats:
+      type: object
+      required: [storeId, totalOrders, totalRevenue, totalCommission, netEarnings, pendingOrders, completedOrders]
+      properties:
+        storeId:
+          type: integer
+        totalOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        totalCommission:
+          type: number
+        netEarnings:
+          type: number
+        pendingOrders:
+          type: integer
+        completedOrders:
+          type: integer
+
+    Product:
+      type: object
+      required: [id, storeId, name, price, category, inStock, createdAt]
+      properties:
+        id:
+          type: integer
+        storeId:
+          type: integer
+        name:
+          type: string
+        nameHindi:
+          type: string
+          nullable: true
+        price:
+          type: number
+        unit:
+          type: string
+          nullable: true
+        category:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        inStock:
+          type: boolean
+        createdAt:
+          type: string
+
+    CreateProductBody:
+      type: object
+      required: [name, price, category]
+      properties:
+        name:
+          type: string
+        nameHindi:
+          type: string
+          nullable: true
+        price:
+          type: number
+        unit:
+          type: string
+          nullable: true
+        category:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        inStock:
+          type: boolean
+
+    UpdateProductBody:
+      type: object
+      properties:
+        name:
+          type: string
+        nameHindi:
+          type: string
+          nullable: true
+        price:
+          type: number
+        unit:
+          type: string
+          nullable: true
+        category:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        inStock:
+          type: boolean
+
+    Order:
+      type: object
+      required: [id, storeId, storeName, customerName, customerPhone, customerAddress, items, subtotal, commissionAmount, status, paymentMethod, createdAt]
+      properties:
+        id:
+          type: integer
+        storeId:
+          type: integer
+        storeName:
+          type: string
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerAddress:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        subtotal:
+          type: number
+        commissionAmount:
+          type: number
+        status:
+          type: string
+          enum: [placed, confirmed, out_for_delivery, delivered, cancelled]
+        paymentMethod:
+          type: string
+          enum: [cod, upi]
+        rating:
+          type: integer
+          nullable: true
+        ratingComment:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+          nullable: true
+
+    OrderItem:
+      type: object
+      required: [productId, productName, quantity, price]
+      properties:
+        productId:
+          type: integer
+        productName:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+
+    CreateOrderBody:
+      type: object
+      required: [storeId, customerName, customerPhone, customerAddress, items, paymentMethod]
+      properties:
+        storeId:
+          type: integer
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerAddress:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateOrderItemBody"
+        paymentMethod:
+          type: string
+          enum: [cod, upi]
+
+    CreateOrderItemBody:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: integer
+        quantity:
+          type: integer
+
+    UpdateOrderStatusBody:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [confirmed, out_for_delivery, delivered, cancelled]
+
+    RateOrderBody:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        ratingComment:
+          type: string
+          nullable: true
+
+    BlockStoreBody:
+      type: object
+      required: [blocked]
+      properties:
+        blocked:
+          type: boolean
+
+    AdminDashboard:
+      type: object
+      required: [totalStores, pendingStores, totalOrders, totalRevenue, totalCommission, recentOrders, topStores]
+      properties:
+        totalStores:
+          type: integer
+        pendingStores:
+          type: integer
+        totalOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        totalCommission:
+          type: number
+        recentOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        topStores:
+          type: array
+          items:
+            $ref: "#/components/schemas/Store"
+
+    Commission:
+      type: object
+      required: [orderId, storeId, storeName, orderAmount, commissionRate, commissionAmount, createdAt]
+      properties:
+        orderId:
+          type: integer
+        storeId:
+          type: integer
+        storeName:
+          type: string
+        orderAmount:
+          type: number
+        commissionRate:
+          type: number
+        commissionAmount:
+          type: number
+        createdAt:
+          type: string

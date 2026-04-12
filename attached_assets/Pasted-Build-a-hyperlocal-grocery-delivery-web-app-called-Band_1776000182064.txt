@@ -1,0 +1,60 @@
+Build a hyperlocal grocery delivery web app called "BandaBazaar" for Banda district, UP (210001) — similar to Blinkit/Zepto but for small town kirana stores.
+Business Model:
+
+Platform connects local kirana/grocery store owners with customers in Banda district
+Platform owner earns 5–10% commission on every order
+No platform delivery staff initially — shop owners arrange their own delivery boys
+Shop owners register their store, upload product catalogue with prices
+Customers browse stores, add items to cart, place orders
+Platform notifies shop owner via SMS/WhatsApp + app notification
+Payment: COD (Cash on Delivery) first, UPI later
+
+Pages to build:
+
+Customer App (Web + Mobile responsive)
+
+Homepage with location detection (Banda district)
+Store listing with distance, rating, delivery time, open/closed status
+Store page with product catalogue + search + category filter
+Cart + checkout with name, address, phone number
+Order tracking page (simple status: Placed → Confirmed → Out for Delivery → Delivered)
+Order history page
+
+
+Shop Owner Dashboard (Web)
+
+Register store: name, address, phone, category, photo
+Add/edit/delete products with price, image, stock status
+View incoming orders with customer details
+Mark order as Confirmed / Out for Delivery / Delivered
+View earnings and commission deducted
+
+
+Admin Panel (Platform Owner — you)
+
+View all registered stores, approve/reject new stores
+View all orders across all stores
+Commission tracking per order
+Total earnings dashboard
+Block/unblock shops
+
+
+
+Tech Stack (suggested):
+
+Frontend: React.js + Tailwind CSS
+Backend: Node.js + Express OR Firebase (for quick launch)
+Database: Firebase Firestore OR MongoDB
+Auth: Firebase Auth (OTP login with phone number)
+Notifications: WhatsApp Business API or Twilio SMS
+Payments: Razorpay (UPI + COD)
+Hosting: Vercel (frontend) + Railway/Render (backend)
+
+Key Features:
+
+Hindi language support (bilingual UI)
+Mobile-first design (most users on 4G phones)
+Store owner can set minimum order amount
+Customer can leave rating after delivery
+Commission auto-calculated: 8% of order value shown in admin panel
+WhatsApp order alert sent to shop owner automatically

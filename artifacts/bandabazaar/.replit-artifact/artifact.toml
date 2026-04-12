@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "BandaBazaar"
+version = "1.0.0"
+id = "artifacts/bandabazaar"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18964
+
+[services.development]
+run = "pnpm --filter @workspace/bandabazaar run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bandabazaar", "run", "build" ]
+publicDir = "artifacts/bandabazaar/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18964"
+BASE_PATH = "/"
