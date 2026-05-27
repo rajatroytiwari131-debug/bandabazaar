@@ -1,0 +1,93 @@
+ Customer Panel (the app/website your buyers use)
+
+Must-Have Features:
+
+
+
+* Location detection (auto-detect using GPS or enter pincode)
+
+* Browse by category (Vegetables, Dairy, Snacks, Medicines, etc.)
+
+* Search with filters (brand, price, in-stock only)
+
+* Product detail pages with clear photos and prices
+
+* Cart with real-time stock validation
+
+* Multiple payment options — UPI, card, cash on delivery
+
+* Order tracking with live status (Acce
+
+* Keep the homepage simple — show nearby stores and popular categories first
+
+* Display delivery time estimates prominently (e.g., "Delivered in 25 min")
+
+* Use large product images — poor photos kill conversions
+
+* One-tap reorder for repeat customers
+
+* Push notifications for order status updates
+
+🏪 Store Panel (dashboard for your partner shop owners)
+
+Must-Have Features:
+
+
+
+* Simple login — OTP-based, no complicated passwords
+
+* Order notification with loud alert (many shopkeepers miss silent pings)
+
+* Accept / Reject order button with reason selection
+
+* Order details — item list, customer address, payment mode
+
+* Inventory management — add products, update stock, mark out-of-stock
+
+* Bulk product upload via Excel/CSV sheet
+
+* Earnings dashboard — daily, weekly, monthly sales
+
+* Settlement reports — when and how much they'll receive
+
+* Delivery assignment — assign to their own delivery boy or self-deliver
+
+* Working hours setting (open/close store toggle)
+
+UX Best Practices:
+
+
+
+* The store panel must work well on a basic Android phone — most small shopkeepers won't use a laptop
+
+* Auto-print order receipt if they have a Bluetooth thermal printer
+
+* Keep the UI in Hindi as well as English — critical for local adoption
+
+* Train shopkeepers with a short 10-minute video walkthrough, not a manual
+
+⚙️ Admin Panel (your control center)
+
+Must-Have Features:
+
+
+
+* Dashboard overview — orders today, active stores, revenue, failed deliveries
+
+* Store onboarding — approve/reject store applications, verify documents (GST, FSSAI if applicable)
+
+* Product catalog management — master list, category creation, image standards
+
+* Order management — view all orders, intervene if stuck, refund processing
+
+* Customer management — view profiles, handle complaints, issue credits
+
+* Commission settings — set per-store or per-category commission rates
+
+* Promotional tools — create offers, banner ads, flash sales
+
+* Analytics — bestselling products, peak order times, drop-off points in checkout
+
+* Payout management — approve weekly settlements to store owners
+
+* Complaint and dispute resolution queue
