@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ShieldCheck, LogOut, LayoutDashboard, Store, IndianRupee } from "lucide-react";
+import { ShieldCheck, LogOut, LayoutDashboard, Store, IndianRupee, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function AdminHeader() {
@@ -14,6 +14,7 @@ export function AdminHeader() {
     { href: "/admin/dashboard",   label: "Dashboard",   icon: LayoutDashboard },
     { href: "/admin/stores",      label: "Stores",      icon: Store },
     { href: "/admin/commissions", label: "Commissions", icon: IndianRupee },
+    { href: "/admin/coupons",     label: "Coupons",     icon: Ticket },
   ];
 
   return (
@@ -69,7 +70,7 @@ export function AdminHeader() {
           const active = location === href;
           return (
             <Link key={href} href={href} className="flex-1">
-              <button className={`w-full flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold transition-colors ${
+              <button className={`w-full flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition-colors ${
                 active ? "text-green-300" : "text-green-500 hover:text-green-300"
               }`}>
                 <Icon className="h-4 w-4" />

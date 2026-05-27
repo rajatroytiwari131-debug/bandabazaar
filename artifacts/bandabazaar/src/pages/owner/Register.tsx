@@ -23,7 +23,7 @@ export default function OwnerRegister() {
   const [imageUrl, setImageUrl] = useState("");
 
   const createStore = useCreateStore();
-  const { data: stores, refetch } = useListStores({ search: phone }, { query: { enabled: false } });
+  const { data: stores, refetch } = useListStores({ search: phone }, { query: { enabled: false } as any });
 
   useEffect(() => {
     const session = localStorage.getItem("bb_owner_phone");

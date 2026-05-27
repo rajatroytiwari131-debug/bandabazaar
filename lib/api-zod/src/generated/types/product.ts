@@ -5,6 +5,8 @@
  * BandaBazaar hyperlocal grocery delivery API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductVariant } from "./productVariant";
+import type { TierPricing } from "./tierPricing";
 
 export interface Product {
   id: number;
@@ -16,5 +18,10 @@ export interface Product {
   category: string;
   imageUrl?: string | null;
   inStock: boolean;
+  variants?: ProductVariant[] | null;
+  customNotesEnabled?: boolean;
+  flashSalePrice?: number | null;
+  flashSaleEndsAt?: string | null;
+  tieredPricing?: TierPricing[] | null;
   createdAt: string;
 }

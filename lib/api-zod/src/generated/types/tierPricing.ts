@@ -5,8 +5,8 @@
  * BandaBazaar hyperlocal grocery delivery API
  * OpenAPI spec version: 0.1.0
  */
-import type { AdminListStoresStatus } from "./adminListStoresStatus";
 
-export type AdminListStoresParams = {
-  status?: AdminListStoresStatus;
-};
+export interface TierPricing {
+  minQty: number;
+  pricePerUnit: number;
+}

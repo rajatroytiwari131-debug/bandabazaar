@@ -20,6 +20,8 @@ tags:
     description: Admin operations
   - name: customers
     description: Customer operations
+  - name: coupons
+    description: Coupon and promotion operations
 
 paths:
   /healthz:
@@ -301,15 +303,17 @@ paths:
             type: integer
       responses:
         "200":
-          description: Order
+          description: Order details
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Order"
+
+  /orders/{orderId}/status:
     put:
       operationId: updateOrderStatus
       tags: [orders]
-      summary: Update order status
+      summary: Update order status (store owner)
       parameters:
         - name: orderId
           in: path
@@ -330,11 +334,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/Order"
 
-  /orders/{orderId}/rating:
+  /orders/{orderId}/rate:
     post:
       operationId: rateOrder
       tags: [orders]
-      summary: Rate an order after delivery
+      summary: Rate a delivered order
       parameters:
         - name: orderId
           in: path
@@ -349,11 +353,126 @@ paths:
               $ref: "#/components/schemas/RateOrderBody"
       responses:
         "200":
-          description: Rating saved
+          description: Rated order
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Order"
+
+  # ─── COUPONS ─────────────────────────────────────────────────────────────────
+
+  /coupons/validate:
+    post:
+      operationId: validateCoupon
+      tags: [coupons]
+      summary: Validate a coupon code and get discount amount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateCouponBody"
+      responses:
+        "200":
+          description: Coupon validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateCouponResponse"
+        "400":
+          description: Invalid coupon
+
+  /stores/{storeId}/coupons:
+    get:
+      operationId: listStoreCoupons
+      tags: [coupons]
+      summary: List coupons for a store (owner)
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of coupons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coupon"
+    post:
+      operationId: createStoreCoupon
+      tags: [coupons]
+      summary: Create a coupon for a store (owner)
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCouponBody"
+      responses:
+        "201":
+          description: Coupon created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+
+  /stores/{storeId}/coupons/{code}:
+    put:
+      operationId: updateStoreCoupon
+      tags: [coupons]
+      summary: Update a store coupon
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCouponBody"
+      responses:
+        "200":
+          description: Updated coupon
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+    delete:
+      operationId: deleteStoreCoupon
+      tags: [coupons]
+      summary: Delete a store coupon
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
 
   # ─── ADMIN ───────────────────────────────────────────────────────────────────
 
@@ -361,15 +480,16 @@ paths:
     get:
       operationId: adminListStores
       tags: [admin]
-      summary: Admin — list all stores (any status)
+      summary: Admin - list all stores
       parameters:
         - name: status
           in: query
           schema:
             type: string
+            enum: [pending, approved, rejected, blocked]
       responses:
         "200":
-          description: List of all stores
+          description: List of stores
           content:
             application/json:
               schema:
@@ -472,6 +592,76 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Commission"
+
+  /admin/coupons:
+    get:
+      operationId: listAdminCoupons
+      tags: [admin]
+      summary: Admin - list all platform-wide coupons
+      responses:
+        "200":
+          description: List of coupons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coupon"
+    post:
+      operationId: createAdminCoupon
+      tags: [admin]
+      summary: Admin - create a platform-wide coupon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCouponBody"
+      responses:
+        "201":
+          description: Coupon created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+
+  /admin/coupons/{code}:
+    put:
+      operationId: updateAdminCoupon
+      tags: [admin]
+      summary: Admin - update a coupon
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCouponBody"
+      responses:
+        "200":
+          description: Updated coupon
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+    delete:
+      operationId: deleteAdminCoupon
+      tags: [admin]
+      summary: Admin - delete a coupon
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
 
 components:
   schemas:
@@ -576,6 +766,26 @@ components:
         completedOrders:
           type: integer
 
+    ProductVariant:
+      type: object
+      required: [label, priceAdjust, inStock]
+      properties:
+        label:
+          type: string
+        priceAdjust:
+          type: number
+        inStock:
+          type: boolean
+
+    TierPricing:
+      type: object
+      required: [minQty, pricePerUnit]
+      properties:
+        minQty:
+          type: integer
+        pricePerUnit:
+          type: number
+
     Product:
       type: object
       required: [id, storeId, name, price, category, inStock, createdAt]
@@ -601,6 +811,24 @@ components:
           nullable: true
         inStock:
           type: boolean
+        variants:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/ProductVariant"
+        customNotesEnabled:
+          type: boolean
+        flashSalePrice:
+          type: number
+          nullable: true
+        flashSaleEndsAt:
+          type: string
+          nullable: true
+        tieredPricing:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/TierPricing"
         createdAt:
           type: string
 
@@ -625,6 +853,24 @@ components:
           nullable: true
         inStock:
           type: boolean
+        variants:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/ProductVariant"
+        customNotesEnabled:
+          type: boolean
+        flashSalePrice:
+          type: number
+          nullable: true
+        flashSaleEndsAt:
+          type: string
+          nullable: true
+        tieredPricing:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/TierPricing"
 
     UpdateProductBody:
       type: object
@@ -646,6 +892,24 @@ components:
           nullable: true
         inStock:
           type: boolean
+        variants:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/ProductVariant"
+        customNotesEnabled:
+          type: boolean
+        flashSalePrice:
+          type: number
+          nullable: true
+        flashSaleEndsAt:
+          type: string
+          nullable: true
+        tieredPricing:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/TierPricing"
 
     Order:
       type: object
@@ -799,3 +1063,119 @@ components:
           type: number
         createdAt:
           type: string
+
+    Coupon:
+      type: object
+      required: [id, code, type, value, minOrderAmount, isActive, usedCount, createdAt]
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percent, fixed]
+        value:
+          type: number
+        minOrderAmount:
+          type: number
+        maxDiscount:
+          type: number
+          nullable: true
+        storeId:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+        usageLimit:
+          type: integer
+          nullable: true
+        usedCount:
+          type: integer
+        expiresAt:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+
+    CreateCouponBody:
+      type: object
+      required: [code, type, value]
+      properties:
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percent, fixed]
+        value:
+          type: number
+        minOrderAmount:
+          type: number
+        maxDiscount:
+          type: number
+          nullable: true
+        isActive:
+          type: boolean
+        usageLimit:
+          type: integer
+          nullable: true
+        expiresAt:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    UpdateCouponBody:
+      type: object
+      properties:
+        value:
+          type: number
+        minOrderAmount:
+          type: number
+        maxDiscount:
+          type: number
+          nullable: true
+        isActive:
+          type: boolean
+        usageLimit:
+          type: integer
+          nullable: true
+        expiresAt:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    ValidateCouponBody:
+      type: object
+      required: [code, orderAmount]
+      properties:
+        code:
+          type: string
+        orderAmount:
+          type: number
+        storeId:
+          type: integer
+          nullable: true
+
+    ValidateCouponResponse:
+      type: object
+      required: [valid, code, discountAmount]
+      properties:
+        valid:
+          type: boolean
+        code:
+          type: string
+        discountAmount:
+          type: number
+        message:
+          type: string
+          nullable: true
+        coupon:
+          $ref: "#/components/schemas/Coupon"
+          nullable: true

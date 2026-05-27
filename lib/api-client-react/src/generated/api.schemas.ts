@@ -65,6 +65,17 @@ export interface StoreStats {
   completedOrders: number;
 }
 
+export interface ProductVariant {
+  label: string;
+  priceAdjust: number;
+  inStock: boolean;
+}
+
+export interface TierPricing {
+  minQty: number;
+  pricePerUnit: number;
+}
+
 export interface Product {
   id: number;
   storeId: number;
@@ -75,6 +86,11 @@ export interface Product {
   category: string;
   imageUrl?: string | null;
   inStock: boolean;
+  variants?: ProductVariant[] | null;
+  customNotesEnabled?: boolean;
+  flashSalePrice?: number | null;
+  flashSaleEndsAt?: string | null;
+  tieredPricing?: TierPricing[] | null;
   createdAt: string;
 }
 
@@ -86,6 +102,11 @@ export interface CreateProductBody {
   category: string;
   imageUrl?: string | null;
   inStock?: boolean;
+  variants?: ProductVariant[] | null;
+  customNotesEnabled?: boolean;
+  flashSalePrice?: number | null;
+  flashSaleEndsAt?: string | null;
+  tieredPricing?: TierPricing[] | null;
 }
 
 export interface UpdateProductBody {
@@ -96,6 +117,11 @@ export interface UpdateProductBody {
   category?: string;
   imageUrl?: string | null;
   inStock?: boolean;
+  variants?: ProductVariant[] | null;
+  customNotesEnabled?: boolean;
+  flashSalePrice?: number | null;
+  flashSaleEndsAt?: string | null;
+  tieredPricing?: TierPricing[] | null;
 }
 
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
@@ -210,6 +236,73 @@ export interface Commission {
   createdAt: string;
 }
 
+export type CouponType = (typeof CouponType)[keyof typeof CouponType];
+
+export const CouponType = {
+  percent: "percent",
+  fixed: "fixed",
+} as const;
+
+export interface Coupon {
+  id: number;
+  code: string;
+  type: CouponType;
+  value: number;
+  minOrderAmount: number;
+  maxDiscount?: number | null;
+  storeId?: number | null;
+  isActive: boolean;
+  usageLimit?: number | null;
+  usedCount: number;
+  expiresAt?: string | null;
+  description?: string | null;
+  createdAt: string;
+}
+
+export type CreateCouponBodyType =
+  (typeof CreateCouponBodyType)[keyof typeof CreateCouponBodyType];
+
+export const CreateCouponBodyType = {
+  percent: "percent",
+  fixed: "fixed",
+} as const;
+
+export interface CreateCouponBody {
+  code: string;
+  type: CreateCouponBodyType;
+  value: number;
+  minOrderAmount?: number;
+  maxDiscount?: number | null;
+  isActive?: boolean;
+  usageLimit?: number | null;
+  expiresAt?: string | null;
+  description?: string | null;
+}
+
+export interface UpdateCouponBody {
+  value?: number;
+  minOrderAmount?: number;
+  maxDiscount?: number | null;
+  isActive?: boolean;
+  usageLimit?: number | null;
+  expiresAt?: string | null;
+  description?: string | null;
+}
+
+export interface ValidateCouponBody {
+  code: string;
+  orderAmount: number;
+  storeId?: number | null;
+}
+
+export interface ValidateCouponResponse {
+  valid: boolean;
+  code: string;
+  discountAmount: number;
+  message?: string | null;
+  coupon?: Coupon | null;
+}
+
 export type ListStoresParams = {
   category?: string;
   search?: string;
@@ -227,8 +320,18 @@ export type ListOrdersParams = {
 };
 
 export type AdminListStoresParams = {
-  status?: string;
+  status?: AdminListStoresStatus;
 };
+
+export type AdminListStoresStatus =
+  (typeof AdminListStoresStatus)[keyof typeof AdminListStoresStatus];
+
+export const AdminListStoresStatus = {
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
+  blocked: "blocked",
+} as const;
 
 export type ListCommissionsParams = {
   storeId?: number;

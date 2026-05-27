@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Store, Package, LogOut, LayoutDashboard, TrendingUp } from "lucide-react";
+import { Store, Package, LogOut, LayoutDashboard, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function OwnerHeader() {
@@ -11,8 +11,9 @@ export function OwnerHeader() {
   };
 
   const navItems = [
-    { href: "/owner/dashboard", label: "Orders",   icon: LayoutDashboard },
-    { href: "/owner/products",  label: "Products", icon: Package },
+    { href: "/owner/dashboard",   label: "Orders",      icon: LayoutDashboard },
+    { href: "/owner/products",    label: "Products",    icon: Package },
+    { href: "/owner/promotions",  label: "Promotions",  icon: Ticket },
   ];
 
   return (
@@ -64,7 +65,7 @@ export function OwnerHeader() {
           const active = location === href;
           return (
             <Link key={href} href={href} className="flex-1">
-              <button className={`w-full flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold transition-colors ${
+              <button className={`w-full flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition-colors ${
                 active ? "text-primary" : "text-muted-foreground hover:text-primary"
               }`}>
                 <Icon className="h-4 w-4" />

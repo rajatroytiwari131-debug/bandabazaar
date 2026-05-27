@@ -41,13 +41,13 @@ export default function OwnerDashboard() {
   }, [setLocation]);
 
   const { data: stores, isLoading: isLoadingStore } = useListStores(
-    { search: phone }, { query: { enabled: phone.length >= 10 } }
+    { search: phone }, { query: { enabled: phone.length >= 10 } as any }
   );
   const store = stores?.[0];
 
-  const { data: stats } = useGetStoreStats(store?.id || 0, { query: { enabled: !!store?.id } });
+  const { data: stats } = useGetStoreStats(store?.id || 0, { query: { enabled: !!store?.id } as any });
   const { data: orders, isLoading: isLoadingOrders } = useListOrders(
-    { storeId: store?.id }, { query: { enabled: !!store?.id } }
+    { storeId: store?.id }, { query: { enabled: !!store?.id } as any }
   );
 
   const updateStore = useUpdateStore();

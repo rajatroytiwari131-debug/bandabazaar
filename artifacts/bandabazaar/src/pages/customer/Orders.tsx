@@ -14,7 +14,7 @@ export default function Orders() {
 
   const { data: orders, isLoading } = useListOrders(
     { customerPhone: searchPhone },
-    { query: { enabled: searchPhone.length >= 10 } }
+    { query: { enabled: searchPhone.length >= 10 } as any }
   );
 
   const handleSearch = (e: React.FormEvent) => {

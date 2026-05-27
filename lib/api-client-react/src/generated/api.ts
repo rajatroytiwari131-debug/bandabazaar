@@ -21,6 +21,8 @@ import type {
   AdminListStoresParams,
   BlockStoreBody,
   Commission,
+  Coupon,
+  CreateCouponBody,
   CreateOrderBody,
   CreateProductBody,
   CreateStoreBody,
@@ -34,9 +36,12 @@ import type {
   RateOrderBody,
   Store,
   StoreStats,
+  UpdateCouponBody,
   UpdateOrderStatusBody,
   UpdateProductBody,
   UpdateStoreBody,
+  ValidateCouponBody,
+  ValidateCouponResponse,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1200,10 +1205,10 @@ export function useGetOrder<
 }
 
 /**
- * @summary Update order status
+ * @summary Update order status (store owner)
  */
 export const getUpdateOrderStatusUrl = (orderId: number) => {
-  return `/api/orders/${orderId}`;
+  return `/api/orders/${orderId}/status`;
 };
 
 export const updateOrderStatus = async (
@@ -1264,7 +1269,7 @@ export type UpdateOrderStatusMutationBody = BodyType<UpdateOrderStatusBody>;
 export type UpdateOrderStatusMutationError = ErrorType<unknown>;
 
 /**
- * @summary Update order status
+ * @summary Update order status (store owner)
  */
 export const useUpdateOrderStatus = <
   TError = ErrorType<unknown>,
@@ -1287,10 +1292,10 @@ export const useUpdateOrderStatus = <
 };
 
 /**
- * @summary Rate an order after delivery
+ * @summary Rate a delivered order
  */
 export const getRateOrderUrl = (orderId: number) => {
-  return `/api/orders/${orderId}/rating`;
+  return `/api/orders/${orderId}/rate`;
 };
 
 export const rateOrder = async (
@@ -1351,7 +1356,7 @@ export type RateOrderMutationBody = BodyType<RateOrderBody>;
 export type RateOrderMutationError = ErrorType<unknown>;
 
 /**
- * @summary Rate an order after delivery
+ * @summary Rate a delivered order
  */
 export const useRateOrder = <
   TError = ErrorType<unknown>,
@@ -1374,7 +1379,441 @@ export const useRateOrder = <
 };
 
 /**
- * @summary Admin — list all stores (any status)
+ * @summary Validate a coupon code and get discount amount
+ */
+export const getValidateCouponUrl = () => {
+  return `/api/coupons/validate`;
+};
+
+export const validateCoupon = async (
+  validateCouponBody: ValidateCouponBody,
+  options?: RequestInit,
+): Promise<ValidateCouponResponse> => {
+  return customFetch<ValidateCouponResponse>(getValidateCouponUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(validateCouponBody),
+  });
+};
+
+export const getValidateCouponMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof validateCoupon>>,
+    TError,
+    { data: BodyType<ValidateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof validateCoupon>>,
+  TError,
+  { data: BodyType<ValidateCouponBody> },
+  TContext
+> => {
+  const mutationKey = ["validateCoupon"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof validateCoupon>>,
+    { data: BodyType<ValidateCouponBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return validateCoupon(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ValidateCouponMutationResult = NonNullable<
+  Awaited<ReturnType<typeof validateCoupon>>
+>;
+export type ValidateCouponMutationBody = BodyType<ValidateCouponBody>;
+export type ValidateCouponMutationError = ErrorType<void>;
+
+/**
+ * @summary Validate a coupon code and get discount amount
+ */
+export const useValidateCoupon = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof validateCoupon>>,
+    TError,
+    { data: BodyType<ValidateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof validateCoupon>>,
+  TError,
+  { data: BodyType<ValidateCouponBody> },
+  TContext
+> => {
+  return useMutation(getValidateCouponMutationOptions(options));
+};
+
+/**
+ * @summary List coupons for a store (owner)
+ */
+export const getListStoreCouponsUrl = (storeId: number) => {
+  return `/api/stores/${storeId}/coupons`;
+};
+
+export const listStoreCoupons = async (
+  storeId: number,
+  options?: RequestInit,
+): Promise<Coupon[]> => {
+  return customFetch<Coupon[]>(getListStoreCouponsUrl(storeId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListStoreCouponsQueryKey = (storeId: number) => {
+  return [`/api/stores/${storeId}/coupons`] as const;
+};
+
+export const getListStoreCouponsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listStoreCoupons>>,
+  TError = ErrorType<unknown>,
+>(
+  storeId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listStoreCoupons>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListStoreCouponsQueryKey(storeId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listStoreCoupons>>
+  > = ({ signal }) => listStoreCoupons(storeId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!storeId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listStoreCoupons>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListStoreCouponsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listStoreCoupons>>
+>;
+export type ListStoreCouponsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List coupons for a store (owner)
+ */
+
+export function useListStoreCoupons<
+  TData = Awaited<ReturnType<typeof listStoreCoupons>>,
+  TError = ErrorType<unknown>,
+>(
+  storeId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listStoreCoupons>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListStoreCouponsQueryOptions(storeId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a coupon for a store (owner)
+ */
+export const getCreateStoreCouponUrl = (storeId: number) => {
+  return `/api/stores/${storeId}/coupons`;
+};
+
+export const createStoreCoupon = async (
+  storeId: number,
+  createCouponBody: CreateCouponBody,
+  options?: RequestInit,
+): Promise<Coupon> => {
+  return customFetch<Coupon>(getCreateStoreCouponUrl(storeId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCouponBody),
+  });
+};
+
+export const getCreateStoreCouponMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStoreCoupon>>,
+    TError,
+    { storeId: number; data: BodyType<CreateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createStoreCoupon>>,
+  TError,
+  { storeId: number; data: BodyType<CreateCouponBody> },
+  TContext
+> => {
+  const mutationKey = ["createStoreCoupon"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createStoreCoupon>>,
+    { storeId: number; data: BodyType<CreateCouponBody> }
+  > = (props) => {
+    const { storeId, data } = props ?? {};
+
+    return createStoreCoupon(storeId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateStoreCouponMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createStoreCoupon>>
+>;
+export type CreateStoreCouponMutationBody = BodyType<CreateCouponBody>;
+export type CreateStoreCouponMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a coupon for a store (owner)
+ */
+export const useCreateStoreCoupon = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStoreCoupon>>,
+    TError,
+    { storeId: number; data: BodyType<CreateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createStoreCoupon>>,
+  TError,
+  { storeId: number; data: BodyType<CreateCouponBody> },
+  TContext
+> => {
+  return useMutation(getCreateStoreCouponMutationOptions(options));
+};
+
+/**
+ * @summary Update a store coupon
+ */
+export const getUpdateStoreCouponUrl = (storeId: number, code: string) => {
+  return `/api/stores/${storeId}/coupons/${code}`;
+};
+
+export const updateStoreCoupon = async (
+  storeId: number,
+  code: string,
+  updateCouponBody: UpdateCouponBody,
+  options?: RequestInit,
+): Promise<Coupon> => {
+  return customFetch<Coupon>(getUpdateStoreCouponUrl(storeId, code), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCouponBody),
+  });
+};
+
+export const getUpdateStoreCouponMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStoreCoupon>>,
+    TError,
+    { storeId: number; code: string; data: BodyType<UpdateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateStoreCoupon>>,
+  TError,
+  { storeId: number; code: string; data: BodyType<UpdateCouponBody> },
+  TContext
+> => {
+  const mutationKey = ["updateStoreCoupon"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateStoreCoupon>>,
+    { storeId: number; code: string; data: BodyType<UpdateCouponBody> }
+  > = (props) => {
+    const { storeId, code, data } = props ?? {};
+
+    return updateStoreCoupon(storeId, code, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateStoreCouponMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateStoreCoupon>>
+>;
+export type UpdateStoreCouponMutationBody = BodyType<UpdateCouponBody>;
+export type UpdateStoreCouponMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a store coupon
+ */
+export const useUpdateStoreCoupon = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStoreCoupon>>,
+    TError,
+    { storeId: number; code: string; data: BodyType<UpdateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateStoreCoupon>>,
+  TError,
+  { storeId: number; code: string; data: BodyType<UpdateCouponBody> },
+  TContext
+> => {
+  return useMutation(getUpdateStoreCouponMutationOptions(options));
+};
+
+/**
+ * @summary Delete a store coupon
+ */
+export const getDeleteStoreCouponUrl = (storeId: number, code: string) => {
+  return `/api/stores/${storeId}/coupons/${code}`;
+};
+
+export const deleteStoreCoupon = async (
+  storeId: number,
+  code: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteStoreCouponUrl(storeId, code), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteStoreCouponMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteStoreCoupon>>,
+    TError,
+    { storeId: number; code: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteStoreCoupon>>,
+  TError,
+  { storeId: number; code: string },
+  TContext
+> => {
+  const mutationKey = ["deleteStoreCoupon"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteStoreCoupon>>,
+    { storeId: number; code: string }
+  > = (props) => {
+    const { storeId, code } = props ?? {};
+
+    return deleteStoreCoupon(storeId, code, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteStoreCouponMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteStoreCoupon>>
+>;
+
+export type DeleteStoreCouponMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a store coupon
+ */
+export const useDeleteStoreCoupon = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteStoreCoupon>>,
+    TError,
+    { storeId: number; code: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteStoreCoupon>>,
+  TError,
+  { storeId: number; code: string },
+  TContext
+> => {
+  return useMutation(getDeleteStoreCouponMutationOptions(options));
+};
+
+/**
+ * @summary Admin - list all stores
  */
 export const getAdminListStoresUrl = (params?: AdminListStoresParams) => {
   const normalizedParams = new URLSearchParams();
@@ -1441,7 +1880,7 @@ export type AdminListStoresQueryResult = NonNullable<
 export type AdminListStoresQueryError = ErrorType<unknown>;
 
 /**
- * @summary Admin — list all stores (any status)
+ * @summary Admin - list all stores
  */
 
 export function useAdminListStores<
@@ -1890,3 +2329,335 @@ export function useListCommissions<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Admin - list all platform-wide coupons
+ */
+export const getListAdminCouponsUrl = () => {
+  return `/api/admin/coupons`;
+};
+
+export const listAdminCoupons = async (
+  options?: RequestInit,
+): Promise<Coupon[]> => {
+  return customFetch<Coupon[]>(getListAdminCouponsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAdminCouponsQueryKey = () => {
+  return [`/api/admin/coupons`] as const;
+};
+
+export const getListAdminCouponsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAdminCoupons>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminCoupons>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAdminCouponsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listAdminCoupons>>
+  > = ({ signal }) => listAdminCoupons({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminCoupons>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAdminCouponsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAdminCoupons>>
+>;
+export type ListAdminCouponsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - list all platform-wide coupons
+ */
+
+export function useListAdminCoupons<
+  TData = Awaited<ReturnType<typeof listAdminCoupons>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAdminCoupons>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAdminCouponsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Admin - create a platform-wide coupon
+ */
+export const getCreateAdminCouponUrl = () => {
+  return `/api/admin/coupons`;
+};
+
+export const createAdminCoupon = async (
+  createCouponBody: CreateCouponBody,
+  options?: RequestInit,
+): Promise<Coupon> => {
+  return customFetch<Coupon>(getCreateAdminCouponUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCouponBody),
+  });
+};
+
+export const getCreateAdminCouponMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAdminCoupon>>,
+    TError,
+    { data: BodyType<CreateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createAdminCoupon>>,
+  TError,
+  { data: BodyType<CreateCouponBody> },
+  TContext
+> => {
+  const mutationKey = ["createAdminCoupon"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createAdminCoupon>>,
+    { data: BodyType<CreateCouponBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createAdminCoupon(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateAdminCouponMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createAdminCoupon>>
+>;
+export type CreateAdminCouponMutationBody = BodyType<CreateCouponBody>;
+export type CreateAdminCouponMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - create a platform-wide coupon
+ */
+export const useCreateAdminCoupon = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAdminCoupon>>,
+    TError,
+    { data: BodyType<CreateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createAdminCoupon>>,
+  TError,
+  { data: BodyType<CreateCouponBody> },
+  TContext
+> => {
+  return useMutation(getCreateAdminCouponMutationOptions(options));
+};
+
+/**
+ * @summary Admin - update a coupon
+ */
+export const getUpdateAdminCouponUrl = (code: string) => {
+  return `/api/admin/coupons/${code}`;
+};
+
+export const updateAdminCoupon = async (
+  code: string,
+  updateCouponBody: UpdateCouponBody,
+  options?: RequestInit,
+): Promise<Coupon> => {
+  return customFetch<Coupon>(getUpdateAdminCouponUrl(code), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCouponBody),
+  });
+};
+
+export const getUpdateAdminCouponMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateAdminCoupon>>,
+    TError,
+    { code: string; data: BodyType<UpdateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateAdminCoupon>>,
+  TError,
+  { code: string; data: BodyType<UpdateCouponBody> },
+  TContext
+> => {
+  const mutationKey = ["updateAdminCoupon"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateAdminCoupon>>,
+    { code: string; data: BodyType<UpdateCouponBody> }
+  > = (props) => {
+    const { code, data } = props ?? {};
+
+    return updateAdminCoupon(code, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateAdminCouponMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateAdminCoupon>>
+>;
+export type UpdateAdminCouponMutationBody = BodyType<UpdateCouponBody>;
+export type UpdateAdminCouponMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - update a coupon
+ */
+export const useUpdateAdminCoupon = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateAdminCoupon>>,
+    TError,
+    { code: string; data: BodyType<UpdateCouponBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateAdminCoupon>>,
+  TError,
+  { code: string; data: BodyType<UpdateCouponBody> },
+  TContext
+> => {
+  return useMutation(getUpdateAdminCouponMutationOptions(options));
+};
+
+/**
+ * @summary Admin - delete a coupon
+ */
+export const getDeleteAdminCouponUrl = (code: string) => {
+  return `/api/admin/coupons/${code}`;
+};
+
+export const deleteAdminCoupon = async (
+  code: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteAdminCouponUrl(code), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteAdminCouponMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteAdminCoupon>>,
+    TError,
+    { code: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteAdminCoupon>>,
+  TError,
+  { code: string },
+  TContext
+> => {
+  const mutationKey = ["deleteAdminCoupon"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteAdminCoupon>>,
+    { code: string }
+  > = (props) => {
+    const { code } = props ?? {};
+
+    return deleteAdminCoupon(code, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteAdminCouponMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteAdminCoupon>>
+>;
+
+export type DeleteAdminCouponMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin - delete a coupon
+ */
+export const useDeleteAdminCoupon = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteAdminCoupon>>,
+    TError,
+    { code: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteAdminCoupon>>,
+  TError,
+  { code: string },
+  TContext
+> => {
+  return useMutation(getDeleteAdminCouponMutationOptions(options));
+};

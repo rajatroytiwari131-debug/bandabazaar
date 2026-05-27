@@ -3,12 +3,14 @@ import { OrderItem } from "@workspace/api-client-react";
 
 export interface CartItem extends OrderItem {
   storeId: number;
+  variantLabel?: string;
+  customNote?: string;
 }
 
 interface CartContextType {
   items: CartItem[];
   storeId: number | null;
-  addItem: (item: Omit<CartItem, "price" | "productName"> & { price: number, productName: string, storeId: number }) => void;
+  addItem: (item: Omit<CartItem, "price" | "productName"> & { price: number; productName: string; storeId: number; variantLabel?: string; customNote?: string }) => void;
   removeItem: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
@@ -33,9 +35,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("bb_cart", JSON.stringify(items));
   }, [items]);
 
-  const addItem = (newItem: Omit<CartItem, "price" | "productName"> & { price: number, productName: string, storeId: number }) => {
+  const addItem = (
+    newItem: Omit<CartItem, "price" | "productName"> & {
+      price: number;
+      productName: string;
+      storeId: number;
+      variantLabel?: string;
+      customNote?: string;
+    }
+  ) => {
     setItems((prev) => {
-      // If adding from a different store, clear cart first
       if (prev.length > 0 && prev[0].storeId !== newItem.storeId) {
         if (!window.confirm("Adding items from a different store will clear your current cart. Continue?")) {
           return prev;
@@ -47,11 +56,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((i) =>
           i.productId === newItem.productId
-            ? { ...i, quantity: i.quantity + newItem.quantity }
+            ? {
+                ...i,
+                quantity: i.quantity + newItem.quantity,
+                variantLabel: newItem.variantLabel ?? i.variantLabel,
+                customNote: newItem.customNote ?? i.customNote,
+                price: newItem.price,
+              }
             : i
         );
       }
-      return [...prev, newItem];
+      return [...prev, { ...newItem }];
     });
   };
 

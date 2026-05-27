@@ -12,7 +12,7 @@ export default function OwnerLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const { data: stores, isLoading } = useListStores({ search: phone }, { query: { enabled: phone.length >= 10 } });
+  const { data: stores, isLoading } = useListStores({ search: phone }, { query: { enabled: phone.length >= 10 } as any });
 
   useEffect(() => {
     const session = localStorage.getItem("bb_owner_phone");

@@ -10,7 +10,7 @@ export default function Order() {
   const [match, params] = useRoute("/order/:orderId");
   const orderId = parseInt(params?.orderId || "0", 10);
 
-  const { data: order, isLoading } = useGetOrder(orderId, { query: { enabled: !!orderId } });
+  const { data: order, isLoading } = useGetOrder(orderId, { query: { enabled: !!orderId } as any });
 
   const getStatusStep = (status: string) => {
     switch (status) {
