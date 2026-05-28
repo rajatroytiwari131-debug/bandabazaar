@@ -15,6 +15,58 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Create a new customer or store-owner account
+ */
+export const SignupBody = zod.object({
+  role: zod.enum(["customer", "store_owner"]),
+  name: zod.string(),
+  phone: zod.string(),
+  email: zod.string().nullish(),
+  password: zod.string(),
+  address: zod.string().nullish(),
+  storeName: zod.string().nullish(),
+  storeAddress: zod.string().nullish(),
+  storeCategory: zod.string().nullish(),
+});
+
+/**
+ * @summary Login with phone and password
+ */
+export const LoginBody = zod.object({
+  phone: zod.string(),
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  user: zod.object({
+    id: zod.number(),
+    name: zod.string(),
+    phone: zod.string(),
+    email: zod.string().nullish(),
+    role: zod.enum(["customer", "store_owner", "admin"]),
+    address: zod.string().nullish(),
+    storeId: zod.number().nullish(),
+  }),
+  message: zod.string().nullish(),
+});
+
+/**
+ * @summary Get current authenticated user
+ */
+export const GetMeResponse = zod.object({
+  user: zod.object({
+    id: zod.number(),
+    name: zod.string(),
+    phone: zod.string(),
+    email: zod.string().nullish(),
+    role: zod.enum(["customer", "store_owner", "admin"]),
+    address: zod.string().nullish(),
+    storeId: zod.number().nullish(),
+  }),
+  message: zod.string().nullish(),
+});
+
+/**
  * @summary List all approved stores
  */
 export const ListStoresQueryParams = zod.object({

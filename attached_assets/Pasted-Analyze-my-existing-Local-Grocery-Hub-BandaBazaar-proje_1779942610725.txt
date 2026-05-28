@@ -1,0 +1,73 @@
+Analyze my existing Local Grocery Hub / BandaBazaar project carefully first.
+
+IMPORTANT RULES:
+- Do NOT rebuild the project from scratch.
+- Do NOT remove or break existing working functionalities (like variants, flash sales, and coupons implemented recently).
+- Only improve, restructure, and integrate new features into the current codebase professionally.
+- Keep ONE website and ONE backend. Use ROLE-BASED authentication and dashboards. Do NOT create separate sub-projects.
+
+==================================================
+MAIN GOAL
+==================================================
+Convert the current single-store/mixed layout into a professional role-based multi-vendor grocery marketplace (Blinkit/Zepto architecture).
+
+Roles Needed:
+1. Customer
+2. Store Owner (Vendor)
+3. Admin
+(No delivery boy panel for now).
+
+==================================================
+1. LOGIN & SIGNUP SYSTEM (Swiggy/Zomato Style)
+==================================================
+- Implement a modern modal/popup authentication UI instead of a rigid full-page redirection if possible, or style the main auth flow beautifully.
+- Fully mobile responsive, smooth transition animations, and soft shadows using the existing Forest Green theme.
+
+Signup Flow:
+- When a user clicks SIGNUP, show a Role Selection screen first:
+  1. "Continue as Customer"
+  2. "Become a Store Partner"
+
+Customer Signup Fields:
+- Full Name, Phone Number, Email, Password, Address.
+- After signup: Auto-login and redirect to Customer Homepage (`/customer` or main marketplace view).
+
+Store Owner Signup Fields:
+- Store Name, Owner Name, Phone Number, Email, Store Address, Password.
+- After signup: Set store status to "pending" in the database and display a clean message: "Your store is waiting for admin approval."
+
+Login Logic:
+- Use one unified login interface.
+- Backend must read the user's role from the JWT/session/database and automatically redirect:
+  * customer → `/customer` (or default marketplace home)
+  * store_owner → `/store` (Vendor dashboard)
+  * admin → `/admin` (Central admin panel)
+- Protect all routes using backend role-based middleware.
+
+==================================================
+2. ROLE-BASED PANELS & FEATURES
+==================================================
+
+CUSTOMER PANEL (Marketplace View):
+- Maintain the current Forest Green UI, sticky navbar, and search bar.
+- Homepage should list Nearby Stores first (using the existing 9 stores structure or dynamic database stores).
+- Clicking on a store should open that specific store's product profile (reusing the existing product listing, categories, variant selectors, and flash sale countdowns).
+- Maintain Cart, Checkout with coupon codes, and Order History.
+
+STORE OWNER PANEL (`/store` or `/owner` rewrite):
+- Secure dashboard for approved store owners only.
+- Features: Add/Edit/Delete products (with current variant & tiered pricing support), Manage Stock (In/Out of stock toggle), Order Management (Accept/Reject orders, Mark as Delivered), View Earnings, and Store Settings.
+
+ADMIN PANEL (`/admin` rewrite):
+- Central control panel for platform owners.
+- Features: Approve/Reject pending stores, View all platform orders, Manage Users/Stores, and track platform-wide coupons/basic analytics.
+
+==================================================
+3. DATABASE & CLEAN CODE COMPLIANCE
+==================================================
+- Update the DB schema cleanly (e.g., adding a 'role' field to users, status to stores, and linking products to specific store IDs).
+- Keep code clean, modular, and resolve any TypeScript or build tool conflicts immediately.
+- Add descriptive comments explaining architecture changes.
+- Ensure the project remains scalable for future additions like live tracking, UPI payments, or notifications.
+
+Please proceed with step-by-step implementation. Do not break type-safety or existing server routes.

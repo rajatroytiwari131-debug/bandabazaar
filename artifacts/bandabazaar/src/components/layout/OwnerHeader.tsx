@@ -1,12 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { Store, Package, LogOut, LayoutDashboard, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 export function OwnerHeader() {
   const [location, setLocation] = useLocation();
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("bb_owner_phone");
+  const handleLogout = async () => {
+    await logout();
     setLocation("/owner");
   };
 

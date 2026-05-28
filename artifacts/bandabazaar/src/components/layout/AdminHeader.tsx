@@ -1,12 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { ShieldCheck, LogOut, LayoutDashboard, Store, IndianRupee, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 export function AdminHeader() {
   const [location, setLocation] = useLocation();
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("bb_admin_authed");
+  const handleLogout = async () => {
+    await logout();
     setLocation("/admin");
   };
 

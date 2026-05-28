@@ -6,6 +6,7 @@ export const storesTable = pgTable("stores", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   ownerPhone: text("owner_phone").notNull(),
+  ownerUserId: integer("owner_user_id"), // FK to users.id — set when owner signs up via auth system
   address: text("address").notNull(),
   category: text("category").notNull(),
   imageUrl: text("image_url"),

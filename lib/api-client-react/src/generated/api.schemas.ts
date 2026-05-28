@@ -303,6 +303,54 @@ export interface ValidateCouponResponse {
   coupon?: Coupon | null;
 }
 
+export type AuthUserRole = (typeof AuthUserRole)[keyof typeof AuthUserRole];
+
+export const AuthUserRole = {
+  customer: "customer",
+  store_owner: "store_owner",
+  admin: "admin",
+} as const;
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  phone: string;
+  email?: string | null;
+  role: AuthUserRole;
+  address?: string | null;
+  storeId?: number | null;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  message?: string | null;
+}
+
+export type SignupBodyRole =
+  (typeof SignupBodyRole)[keyof typeof SignupBodyRole];
+
+export const SignupBodyRole = {
+  customer: "customer",
+  store_owner: "store_owner",
+} as const;
+
+export interface SignupBody {
+  role: SignupBodyRole;
+  name: string;
+  phone: string;
+  email?: string | null;
+  password: string;
+  address?: string | null;
+  storeName?: string | null;
+  storeAddress?: string | null;
+  storeCategory?: string | null;
+}
+
+export interface LoginBody {
+  phone: string;
+  password: string;
+}
+
 export type ListStoresParams = {
   category?: string;
   search?: string;

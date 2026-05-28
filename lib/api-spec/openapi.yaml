@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
   - name: stores
     description: Store operations
   - name: products
@@ -36,6 +38,74 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ────────────────────────────────────────────────────────────────────
+
+  /auth/signup:
+    post:
+      operationId: signup
+      tags: [auth]
+      summary: Create a new customer or store-owner account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupBody"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          description: Phone already registered
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with phone and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout (clears session cookie)
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Not authenticated
 
   # ─── STORES ──────────────────────────────────────────────────────────────────
 
@@ -1179,3 +1249,74 @@ components:
         coupon:
           $ref: "#/components/schemas/Coupon"
           nullable: true
+
+    AuthUser:
+      type: object
+      required: [id, name, phone, role]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [customer, store_owner, admin]
+        address:
+          type: string
+          nullable: true
+        storeId:
+          type: integer
+          nullable: true
+
+    AuthResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUser"
+        message:
+          type: string
+          nullable: true
+
+    SignupBody:
+      type: object
+      required: [role, name, phone, password]
+      properties:
+        role:
+          type: string
+          enum: [customer, store_owner]
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        password:
+          type: string
+        address:
+          type: string
+          nullable: true
+        storeName:
+          type: string
+          nullable: true
+        storeAddress:
+          type: string
+          nullable: true
+        storeCategory:
+          type: string
+          nullable: true
+
+    LoginBody:
+      type: object
+      required: [phone, password]
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
