@@ -162,34 +162,20 @@ export default function AuthModal() {
           {screen === "role-select" && (
             <div>
               <h2 className="text-xl font-bold text-gray-800 mb-1">Create Account</h2>
-              <p className="text-gray-500 text-sm mb-6">How would you like to join BandaBazaar?</p>
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <button
-                  onClick={() => setScreen("signup-customer")}
-                  className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-full bg-green-100 group-hover:bg-green-200 flex items-center justify-center transition-colors">
-                    <ShoppingBag className="w-6 h-6 text-green-700" />
-                  </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-gray-800 text-sm">Customer</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Shop & order groceries</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setScreen("signup-owner")}
-                  className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-full bg-green-100 group-hover:bg-green-200 flex items-center justify-center transition-colors">
-                    <Store className="w-6 h-6 text-green-700" />
-                  </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-gray-800 text-sm">Store Partner</div>
-                    <div className="text-xs text-gray-500 mt-0.5">List your kirana store</div>
-                  </div>
-                </button>
-              </div>
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-gray-500 text-sm mb-6">Banda, UP ke stores se grocery order karo</p>
+              <button
+                onClick={() => setScreen("signup-customer")}
+                className="w-full flex items-center gap-4 p-5 rounded-xl border-2 border-green-500 bg-green-50 transition-all mb-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <ShoppingBag className="w-6 h-6 text-green-700" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-gray-800">Customer Account</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Grocery order karo apne ghar se</div>
+                </div>
+              </button>
+              <p className="text-center text-sm text-gray-500 mb-4">
                 Already have an account?{" "}
                 <button
                   onClick={() => setScreen("login")}
@@ -198,6 +184,14 @@ export default function AuthModal() {
                   Login
                 </button>
               </p>
+              <div className="border-t pt-4">
+                <p className="text-xs text-center text-gray-400">
+                  Store partner ho?{" "}
+                  <a href="/owner/register" onClick={closeAuthModal} className="text-green-700 font-semibold hover:underline">
+                    Apni store register karo →
+                  </a>
+                </p>
+              </div>
             </div>
           )}
 
