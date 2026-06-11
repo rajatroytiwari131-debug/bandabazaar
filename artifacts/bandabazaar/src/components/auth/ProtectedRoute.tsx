@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth, type UserRole } from "@/context/AuthContext";
 
@@ -11,12 +11,14 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ component: Component, roles, redirectTo }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const redirected = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && (!user || !roles.includes(user.role))) {
+    if (!isLoading && !redirected.current && (!user || !roles.includes(user.role))) {
+      redirected.current = true;
       setLocation(redirectTo);
     }
-  }, [user, isLoading, setLocation, redirectTo]);
+  });
 
   if (isLoading) {
     return (

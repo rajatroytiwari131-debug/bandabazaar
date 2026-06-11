@@ -130,6 +130,36 @@ router.get("/orders/:orderId", async (req, res): Promise<void> => {
 });
 
 // ─── Protected: update order status (store owner of that order, or admin) ─────
+// Support both /orders/:orderId and /orders/:orderId/status (frontend may use either)
+router.put("/orders/:orderId/status", requireOwner, async (req, res): Promise<void> => {
+  const params = UpdateOrderStatusParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const parsed = UpdateOrderStatusBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [existing] = await db.select().from(ordersTable).where(eq(ordersTable.id, params.data.orderId));
+  if (!existing) { res.status(404).json({ error: "Order not found" }); return; }
+  if (req.user!.role === "store_owner" && req.user!.storeId !== existing.storeId) {
+    res.status(403).json({ error: "You can only manage orders for your own store." }); return;
+  }
+  const [order] = await db.update(ordersTable)
+    .set({ status: parsed.data.status, updatedAt: new Date() })
+    .where(eq(ordersTable.id, params.data.orderId))
+    .returning();
+  if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+  if (parsed.data.status === "delivered") {
+    const deliveredOrders = await db.select().from(ordersTable)
+      .where(and(eq(ordersTable.storeId, order.storeId), eq(ordersTable.status, "delivered")));
+    const ratings = deliveredOrders.filter((o) => o.rating != null).map((o) => o.rating as number);
+    if (ratings.length > 0) {
+      const avgRating = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+      await db.update(storesTable)
+        .set({ rating: String(avgRating.toFixed(2)), totalRatings: ratings.length })
+        .where(eq(storesTable.id, order.storeId));
+    }
+  }
+  res.json(formatOrder(order));
+});
+
 router.put("/orders/:orderId", requireOwner, async (req, res): Promise<void> => {
   const params = UpdateOrderStatusParams.safeParse(req.params);
   if (!params.success) {
