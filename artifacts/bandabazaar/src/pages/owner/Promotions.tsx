@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useState } from "react";
 import { OwnerHeader } from "@/components/layout/OwnerHeader";
-import { useListStores, useListStoreCoupons, useCreateStoreCoupon, useUpdateStoreCoupon, useDeleteStoreCoupon, getListStoreCouponsQueryKey } from "@workspace/api-client-react";
+import { useAuth } from "@/context/AuthContext";
+import { useListStoreCoupons, useCreateStoreCoupon, useUpdateStoreCoupon, useDeleteStoreCoupon, getListStoreCouponsQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ticket, Plus, Trash2, Edit, Tag, Percent, IndianRupee, Zap, CheckCircle, XCircle } from "lucide-react";
+import { Ticket, Plus, Trash2, Tag, Percent, IndianRupee } from "lucide-react";
 
 export default function OwnerPromotions() {
-  const [phone, setPhone] = useState("");
-  const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -30,14 +29,7 @@ export default function OwnerPromotions() {
   const [description, setDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
 
-  useEffect(() => {
-    const session = localStorage.getItem("bb_owner_phone");
-    if (!session) setLocation("/owner");
-    else setPhone(session);
-  }, [setLocation]);
-
-  const { data: stores } = useListStores({ search: phone }, { query: { enabled: phone.length >= 10 } as any });
-  const storeId = stores?.[0]?.id || 0;
+  const storeId = user?.storeId ?? 0;
 
   const { data: coupons, isLoading } = useListStoreCoupons(storeId, { query: { enabled: !!storeId } as any });
   const createCoupon = useCreateStoreCoupon();

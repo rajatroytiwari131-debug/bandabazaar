@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import AuthModal from "@/components/auth/AuthModal";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import NotFound from "@/pages/not-found";
 
 // Customer Pages
@@ -33,26 +34,44 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Switch>
-      {/* Customer Routes */}
+      {/* Customer Routes — public */}
       <Route path="/" component={Home} />
       <Route path="/store/:storeId" component={Store} />
       <Route path="/cart" component={Cart} />
       <Route path="/order/:orderId" component={Order} />
       <Route path="/orders" component={Orders} />
 
-      {/* Owner Routes */}
+      {/* Owner Login + Register — public */}
       <Route path="/owner" component={OwnerLogin} />
       <Route path="/owner/register" component={OwnerRegister} />
-      <Route path="/owner/dashboard" component={OwnerDashboard} />
-      <Route path="/owner/products" component={OwnerProducts} />
-      <Route path="/owner/promotions" component={OwnerPromotions} />
 
-      {/* Admin Routes */}
+      {/* Owner Protected Routes */}
+      <Route path="/owner/dashboard">
+        {() => <ProtectedRoute component={OwnerDashboard} roles={["store_owner", "admin"]} redirectTo="/owner" />}
+      </Route>
+      <Route path="/owner/products">
+        {() => <ProtectedRoute component={OwnerProducts} roles={["store_owner", "admin"]} redirectTo="/owner" />}
+      </Route>
+      <Route path="/owner/promotions">
+        {() => <ProtectedRoute component={OwnerPromotions} roles={["store_owner", "admin"]} redirectTo="/owner" />}
+      </Route>
+
+      {/* Admin Login — public */}
       <Route path="/admin" component={AdminLogin} />
-      <Route path="/admin/dashboard" component={AdminDashboard} />
-      <Route path="/admin/stores" component={AdminStores} />
-      <Route path="/admin/commissions" component={AdminCommissions} />
-      <Route path="/admin/coupons" component={AdminCoupons} />
+
+      {/* Admin Protected Routes */}
+      <Route path="/admin/dashboard">
+        {() => <ProtectedRoute component={AdminDashboard} roles={["admin"]} redirectTo="/admin" />}
+      </Route>
+      <Route path="/admin/stores">
+        {() => <ProtectedRoute component={AdminStores} roles={["admin"]} redirectTo="/admin" />}
+      </Route>
+      <Route path="/admin/commissions">
+        {() => <ProtectedRoute component={AdminCommissions} roles={["admin"]} redirectTo="/admin" />}
+      </Route>
+      <Route path="/admin/coupons">
+        {() => <ProtectedRoute component={AdminCoupons} roles={["admin"]} redirectTo="/admin" />}
+      </Route>
 
       <Route component={NotFound} />
     </Switch>

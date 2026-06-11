@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { OwnerHeader } from "@/components/layout/OwnerHeader";
+import { useAuth } from "@/context/AuthContext";
 import {
-  useListStores, useListOrders, useGetStoreStats,
+  useGetStore, useListOrders, useGetStoreStats,
   useUpdateOrderStatus, useUpdateStore,
   getListOrdersQueryKey, getGetStoreStatsQueryKey
 } from "@workspace/api-client-react";
@@ -29,25 +30,18 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 export default function OwnerDashboard() {
-  const [phone, setPhone] = useState("");
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showHistory, setShowHistory] = useState(false);
 
-  useEffect(() => {
-    const session = localStorage.getItem("bb_owner_phone");
-    if (!session) { setLocation("/owner"); } else { setPhone(session); }
-  }, [setLocation]);
+  const storeId = user?.storeId ?? 0;
 
-  const { data: stores, isLoading: isLoadingStore } = useListStores(
-    { search: phone }, { query: { enabled: phone.length >= 10 } as any }
-  );
-  const store = stores?.[0];
-
-  const { data: stats } = useGetStoreStats(store?.id || 0, { query: { enabled: !!store?.id } as any });
+  const { data: store, isLoading: isLoadingStore } = useGetStore(storeId, { query: { enabled: !!storeId } as any });
+  const { data: stats } = useGetStoreStats(storeId, { query: { enabled: !!storeId } as any });
   const { data: orders, isLoading: isLoadingOrders } = useListOrders(
-    { storeId: store?.id }, { query: { enabled: !!store?.id } as any }
+    { storeId }, { query: { enabled: !!storeId } as any }
   );
 
   const updateStore = useUpdateStore();
@@ -67,8 +61,8 @@ export default function OwnerDashboard() {
     updateStatus.mutate({ orderId, data: { status } }, {
       onSuccess: () => {
         toast({ title: `Order #${orderId} — ${STATUS_CONFIG[status]?.label}` });
-        queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({ storeId: store?.id }) });
-        queryClient.invalidateQueries({ queryKey: getGetStoreStatsQueryKey(store?.id || 0) });
+        queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({ storeId }) });
+        queryClient.invalidateQueries({ queryKey: getGetStoreStatsQueryKey(storeId) });
       },
     });
   };
@@ -82,7 +76,10 @@ export default function OwnerDashboard() {
     );
   }
 
-  if (!store && phone) { setLocation("/owner/register"); return null; }
+  if (!store && !isLoadingStore && storeId === 0) {
+    setLocation("/owner/register");
+    return null;
+  }
 
   if (store?.status === "pending") {
     return (

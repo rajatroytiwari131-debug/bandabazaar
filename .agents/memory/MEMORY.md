@@ -1,0 +1,1 @@
+- [Auth system pattern](auth-pattern.md) — JWT HTTP-only cookie (`bb_token`), AuthContext on frontend; ProtectedRoute guards routes by role

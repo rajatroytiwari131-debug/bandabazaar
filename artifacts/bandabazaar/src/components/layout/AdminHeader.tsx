@@ -1,11 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { ShieldCheck, LogOut, LayoutDashboard, Store, IndianRupee, Ticket } from "lucide-react";
+import { ShieldCheck, LogOut, LayoutDashboard, Store, IndianRupee, Ticket, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 
 export function AdminHeader() {
   const [location, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -51,10 +51,18 @@ export function AdminHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 bg-green-800/50 rounded-lg px-3 py-1.5 text-xs text-green-300 font-medium border border-green-700/40">
-            <ShieldCheck className="h-3.5 w-3.5 text-green-400" />
-            Admin Access
-          </div>
+          {/* Logged-in user info */}
+          {user && (
+            <div className="hidden sm:flex items-center gap-2 bg-green-800/50 rounded-lg px-3 py-1.5 border border-green-700/40">
+              <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center">
+                <User className="h-3.5 w-3.5 text-white" />
+              </div>
+              <div className="leading-tight">
+                <p className="text-xs font-semibold text-white">{user.name}</p>
+                <p className="text-[10px] text-green-400">Admin</p>
+              </div>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="sm"

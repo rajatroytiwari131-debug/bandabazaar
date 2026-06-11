@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { useLocation } from "wouter";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { useGetAdminDashboard, useListCommissions, useAdminListStores } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,13 +14,6 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function AdminDashboard() {
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    const session = localStorage.getItem("bb_admin_authed");
-    if (session !== "true") setLocation("/admin");
-  }, [setLocation]);
-
   const { data: dashboard, isLoading } = useGetAdminDashboard();
   const { data: allCommissions } = useListCommissions({});
   const { data: allStores } = useAdminListStores({});

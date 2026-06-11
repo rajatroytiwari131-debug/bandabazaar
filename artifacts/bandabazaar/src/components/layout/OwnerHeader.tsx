@@ -1,11 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { Store, Package, LogOut, LayoutDashboard, Ticket } from "lucide-react";
+import { Store, Package, LogOut, LayoutDashboard, Ticket, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { useGetStore } from "@workspace/api-client-react";
 
 export function OwnerHeader() {
   const [location, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const storeId = user?.storeId ?? 0;
+
+  const { data: store } = useGetStore(storeId, { query: { enabled: !!storeId } as any });
 
   const handleLogout = async () => {
     await logout();
@@ -26,7 +30,9 @@ export function OwnerHeader() {
             <Store className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <span className="text-base font-bold text-primary tracking-tight leading-none block">Store Partner</span>
+            <span className="text-base font-bold text-primary tracking-tight leading-none block">
+              {store?.name ?? "Store Partner"}
+            </span>
             <span className="text-[10px] text-muted-foreground font-semibold tracking-widest uppercase">BandaBazaar</span>
           </div>
         </Link>
@@ -50,6 +56,15 @@ export function OwnerHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* Owner name badge */}
+          {user && (
+            <div className="hidden sm:flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 border">
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-xs font-bold text-primary">{user.name.charAt(0).toUpperCase()}</span>
+              </div>
+              <span className="text-xs font-semibold text-foreground">{user.name}</span>
+            </div>
+          )}
           <Button
             variant="outline"
             size="sm"

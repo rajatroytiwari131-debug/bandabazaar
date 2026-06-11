@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useState } from "react";
 import { OwnerHeader } from "@/components/layout/OwnerHeader";
-import { useListProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, useListStores, getListProductsQueryKey } from "@workspace/api-client-react";
+import { useAuth } from "@/context/AuthContext";
+import { useListProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, getListProductsQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,7 @@ type Variant = { label: string; priceAdjust: number; inStock: boolean };
 type TierPricing = { minQty: number; pricePerUnit: number };
 
 export default function OwnerProducts() {
-  const [phone, setPhone] = useState("");
-  const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -53,14 +52,7 @@ export default function OwnerProducts() {
   const [newTierQty, setNewTierQty] = useState("");
   const [newTierPrice, setNewTierPrice] = useState("");
 
-  useEffect(() => {
-    const session = localStorage.getItem("bb_owner_phone");
-    if (!session) setLocation("/owner");
-    else setPhone(session);
-  }, [setLocation]);
-
-  const { data: stores, isLoading: isLoadingStore } = useListStores({ search: phone }, { query: { enabled: phone.length >= 10 } as any });
-  const storeId = stores?.[0]?.id || 0;
+  const storeId = user?.storeId ?? 0;
 
   const { data: products, isLoading: isLoadingProducts } = useListProducts(storeId, { search: search || undefined }, { query: { enabled: !!storeId } as any });
 
@@ -271,8 +263,6 @@ export default function OwnerProducts() {
       </DialogFooter>
     </form>
   );
-
-  if (isLoadingStore && !storeId) return <div className="min-h-screen bg-muted/30"><OwnerHeader /></div>;
 
   return (
     <div className="min-h-screen bg-muted/30 pb-12">
