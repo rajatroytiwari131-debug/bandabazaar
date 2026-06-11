@@ -11,6 +11,7 @@ import {
   UpdateProductBody,
   DeleteProductParams,
 } from "@workspace/api-zod";
+import { requireStoreOwnership } from "../middleware/auth";
 
 const router: IRouter = Router();
 
@@ -37,6 +38,7 @@ function formatProduct(p: typeof productsTable.$inferSelect) {
   };
 }
 
+// ─── Public: list products for a store ───────────────────────────────────────
 router.get("/stores/:storeId/products", async (req, res): Promise<void> => {
   const params = ListProductsParams.safeParse(req.params);
   if (!params.success) {
@@ -59,7 +61,8 @@ router.get("/stores/:storeId/products", async (req, res): Promise<void> => {
   res.json(products.map(formatProduct));
 });
 
-router.post("/stores/:storeId/products", async (req, res): Promise<void> => {
+// ─── Protected: add product (own store only, or admin) ────────────────────────
+router.post("/stores/:storeId/products", requireStoreOwnership(), async (req, res): Promise<void> => {
   const params = CreateProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -92,7 +95,8 @@ router.post("/stores/:storeId/products", async (req, res): Promise<void> => {
   res.status(201).json(formatProduct(product));
 });
 
-router.put("/stores/:storeId/products/:productId", async (req, res): Promise<void> => {
+// ─── Protected: update product (own store only, or admin) ─────────────────────
+router.put("/stores/:storeId/products/:productId", requireStoreOwnership(), async (req, res): Promise<void> => {
   const params = UpdateProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -133,7 +137,8 @@ router.put("/stores/:storeId/products/:productId", async (req, res): Promise<voi
   res.json(formatProduct(product));
 });
 
-router.delete("/stores/:storeId/products/:productId", async (req, res): Promise<void> => {
+// ─── Protected: delete product (own store only, or admin) ─────────────────────
+router.delete("/stores/:storeId/products/:productId", requireStoreOwnership(), async (req, res): Promise<void> => {
   const params = DeleteProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

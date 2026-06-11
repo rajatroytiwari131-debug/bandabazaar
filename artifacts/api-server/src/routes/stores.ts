@@ -9,6 +9,7 @@ import {
   UpdateStoreBody,
   GetStoreStatsParams,
 } from "@workspace/api-zod";
+import { requireStoreOwnership } from "../middleware/auth";
 
 const router: IRouter = Router();
 
@@ -31,6 +32,7 @@ function formatStore(s: typeof storesTable.$inferSelect) {
   };
 }
 
+// ─── Public: browse approved stores ──────────────────────────────────────────
 router.get("/stores", async (req, res): Promise<void> => {
   const query = ListStoresQueryParams.safeParse(req.query);
   if (!query.success) {
@@ -47,6 +49,26 @@ router.get("/stores", async (req, res): Promise<void> => {
   res.json(stores.map(formatStore));
 });
 
+// ─── Public: view a single store ─────────────────────────────────────────────
+router.get("/stores/:storeId", async (req, res): Promise<void> => {
+  const params = GetStoreParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [store] = await db.select().from(storesTable).where(eq(storesTable.id, params.data.storeId));
+  if (!store) {
+    res.status(404).json({ error: "Store not found" });
+    return;
+  }
+
+  res.json(formatStore(store));
+});
+
+// ─── Public: register a new store (used during owner signup flow) ─────────────
+// Note: the auth signup route also creates stores; this endpoint remains for
+// the standalone store registration API.
 router.post("/stores", async (req, res): Promise<void> => {
   const parsed = CreateStoreBody.safeParse(req.body);
   if (!parsed.success) {
@@ -67,23 +89,8 @@ router.post("/stores", async (req, res): Promise<void> => {
   res.status(201).json(formatStore(store));
 });
 
-router.get("/stores/:storeId", async (req, res): Promise<void> => {
-  const params = GetStoreParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  const [store] = await db.select().from(storesTable).where(eq(storesTable.id, params.data.storeId));
-  if (!store) {
-    res.status(404).json({ error: "Store not found" });
-    return;
-  }
-
-  res.json(formatStore(store));
-});
-
-router.put("/stores/:storeId", async (req, res): Promise<void> => {
+// ─── Protected: update store settings (own store only, or admin) ──────────────
+router.put("/stores/:storeId", requireStoreOwnership(), async (req, res): Promise<void> => {
   const params = UpdateStoreParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -114,7 +121,8 @@ router.put("/stores/:storeId", async (req, res): Promise<void> => {
   res.json(formatStore(store));
 });
 
-router.get("/stores/:storeId/stats", async (req, res): Promise<void> => {
+// ─── Protected: store stats (own store only, or admin) ────────────────────────
+router.get("/stores/:storeId/stats", requireStoreOwnership(), async (req, res): Promise<void> => {
   const params = GetStoreStatsParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and, isNull, or } from "drizzle-orm";
 import { db, couponsTable } from "@workspace/db";
 import { z } from "zod";
+import { requireAdmin, requireStoreOwnership } from "../middleware/auth";
 
 const router: IRouter = Router();
 
@@ -51,7 +52,7 @@ const ValidateCouponBody = z.object({
   storeId: z.number().int().nullish(),
 });
 
-// POST /coupons/validate — public endpoint, anyone can validate
+// ─── Public: validate a coupon code ──────────────────────────────────────────
 router.post("/coupons/validate", async (req, res): Promise<void> => {
   const parsed = ValidateCouponBody.safeParse(req.body);
   if (!parsed.success) {
@@ -97,7 +98,6 @@ router.post("/coupons/validate", async (req, res): Promise<void> => {
     return;
   }
 
-  // Coupon must be platform-wide (storeId null) or match the specific store
   if (coupon.storeId != null && storeId != null && coupon.storeId !== storeId) {
     res.status(400).json({ valid: false, code: upperCode, discountAmount: 0, message: "Coupon not valid for this store" });
     return;
@@ -124,10 +124,9 @@ router.post("/coupons/validate", async (req, res): Promise<void> => {
   });
 });
 
-// ─── Store Owner Coupon Routes ─────────────────────────────────────────────────
-
-router.get("/stores/:storeId/coupons", async (req, res): Promise<void> => {
-  const storeId = parseInt(req.params.storeId);
+// ─── Store Owner: list coupons for their store (includes platform-wide) ───────
+router.get("/stores/:storeId/coupons", requireStoreOwnership(), async (req, res): Promise<void> => {
+  const storeId = parseInt(req.params.storeId as string);
   if (isNaN(storeId)) { res.status(400).json({ error: "Invalid storeId" }); return; }
 
   const coupons = await db.select().from(couponsTable)
@@ -136,8 +135,9 @@ router.get("/stores/:storeId/coupons", async (req, res): Promise<void> => {
   res.json(coupons.map(formatCoupon));
 });
 
-router.post("/stores/:storeId/coupons", async (req, res): Promise<void> => {
-  const storeId = parseInt(req.params.storeId);
+// ─── Store Owner: create coupon for their store ───────────────────────────────
+router.post("/stores/:storeId/coupons", requireStoreOwnership(), async (req, res): Promise<void> => {
+  const storeId = parseInt(req.params.storeId as string);
   if (isNaN(storeId)) { res.status(400).json({ error: "Invalid storeId" }); return; }
 
   const parsed = CreateCouponBody.safeParse(req.body);
@@ -160,9 +160,10 @@ router.post("/stores/:storeId/coupons", async (req, res): Promise<void> => {
   res.status(201).json(formatCoupon(coupon));
 });
 
-router.put("/stores/:storeId/coupons/:code", async (req, res): Promise<void> => {
-  const storeId = parseInt(req.params.storeId);
-  const code = req.params.code.toUpperCase();
+// ─── Store Owner: update their store coupon ───────────────────────────────────
+router.put("/stores/:storeId/coupons/:code", requireStoreOwnership(), async (req, res): Promise<void> => {
+  const storeId = parseInt(req.params.storeId as string);
+  const code = (req.params.code as string).toUpperCase();
   if (isNaN(storeId)) { res.status(400).json({ error: "Invalid storeId" }); return; }
 
   const parsed = UpdateCouponBody.safeParse(req.body);
@@ -187,9 +188,10 @@ router.put("/stores/:storeId/coupons/:code", async (req, res): Promise<void> => 
   res.json(formatCoupon(coupon));
 });
 
-router.delete("/stores/:storeId/coupons/:code", async (req, res): Promise<void> => {
-  const storeId = parseInt(req.params.storeId);
-  const code = req.params.code.toUpperCase();
+// ─── Store Owner: delete their store coupon ───────────────────────────────────
+router.delete("/stores/:storeId/coupons/:code", requireStoreOwnership(), async (req, res): Promise<void> => {
+  const storeId = parseInt(req.params.storeId as string);
+  const code = (req.params.code as string).toUpperCase();
 
   await db.delete(couponsTable)
     .where(and(eq(couponsTable.code, code), eq(couponsTable.storeId, storeId)));
@@ -197,14 +199,14 @@ router.delete("/stores/:storeId/coupons/:code", async (req, res): Promise<void> 
   res.sendStatus(204);
 });
 
-// ─── Admin Coupon Routes ───────────────────────────────────────────────────────
-
-router.get("/admin/coupons", async (_req, res): Promise<void> => {
+// ─── Admin: list all platform coupons ────────────────────────────────────────
+router.get("/admin/coupons", requireAdmin, async (_req, res): Promise<void> => {
   const coupons = await db.select().from(couponsTable);
   res.json(coupons.map(formatCoupon));
 });
 
-router.post("/admin/coupons", async (req, res): Promise<void> => {
+// ─── Admin: create platform-wide coupon ──────────────────────────────────────
+router.post("/admin/coupons", requireAdmin, async (req, res): Promise<void> => {
   const parsed = CreateCouponBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
@@ -215,7 +217,7 @@ router.post("/admin/coupons", async (req, res): Promise<void> => {
     value: String(d.value),
     minOrderAmount: String(d.minOrderAmount ?? 0),
     maxDiscount: d.maxDiscount != null ? String(d.maxDiscount) : null,
-    storeId: null, // platform-wide
+    storeId: null,
     isActive: d.isActive ?? true,
     usageLimit: d.usageLimit ?? null,
     expiresAt: d.expiresAt ? new Date(d.expiresAt) : null,
@@ -225,8 +227,9 @@ router.post("/admin/coupons", async (req, res): Promise<void> => {
   res.status(201).json(formatCoupon(coupon));
 });
 
-router.put("/admin/coupons/:code", async (req, res): Promise<void> => {
-  const code = req.params.code.toUpperCase();
+// ─── Admin: update any coupon ─────────────────────────────────────────────────
+router.put("/admin/coupons/:code", requireAdmin, async (req, res): Promise<void> => {
+  const code = (req.params.code as string).toUpperCase();
   const parsed = UpdateCouponBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
@@ -249,8 +252,9 @@ router.put("/admin/coupons/:code", async (req, res): Promise<void> => {
   res.json(formatCoupon(coupon));
 });
 
-router.delete("/admin/coupons/:code", async (req, res): Promise<void> => {
-  const code = req.params.code.toUpperCase();
+// ─── Admin: delete any coupon ─────────────────────────────────────────────────
+router.delete("/admin/coupons/:code", requireAdmin, async (req, res): Promise<void> => {
+  const code = (req.params.code as string).toUpperCase();
   await db.delete(couponsTable).where(eq(couponsTable.code, code));
   res.sendStatus(204);
 });

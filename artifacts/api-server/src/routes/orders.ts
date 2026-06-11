@@ -10,6 +10,7 @@ import {
   RateOrderParams,
   RateOrderBody,
 } from "@workspace/api-zod";
+import { requireOwner } from "../middleware/auth";
 
 const router: IRouter = Router();
 
@@ -35,6 +36,7 @@ function formatOrder(o: typeof ordersTable.$inferSelect) {
   };
 }
 
+// ─── Public: list orders (filter by customerPhone for order history, or storeId) ──
 router.get("/orders", async (req, res): Promise<void> => {
   const query = ListOrdersQueryParams.safeParse(req.query);
   if (!query.success) {
@@ -55,6 +57,7 @@ router.get("/orders", async (req, res): Promise<void> => {
   res.json(orders.map(formatOrder));
 });
 
+// ─── Public: place a new order (COD, no account required) ─────────────────────
 router.post("/orders", async (req, res): Promise<void> => {
   const parsed = CreateOrderBody.safeParse(req.body);
   if (!parsed.success) {
@@ -68,7 +71,11 @@ router.post("/orders", async (req, res): Promise<void> => {
     return;
   }
 
-  const productIds = parsed.data.items.map((i) => i.productId);
+  if (store.status !== "approved") {
+    res.status(400).json({ error: "Store is not accepting orders right now" });
+    return;
+  }
+
   const products = await db.select().from(productsTable)
     .where(eq(productsTable.storeId, parsed.data.storeId));
 
@@ -105,6 +112,7 @@ router.post("/orders", async (req, res): Promise<void> => {
   res.status(201).json(formatOrder(order));
 });
 
+// ─── Public: get order by ID (order tracking) ─────────────────────────────────
 router.get("/orders/:orderId", async (req, res): Promise<void> => {
   const params = GetOrderParams.safeParse(req.params);
   if (!params.success) {
@@ -121,7 +129,8 @@ router.get("/orders/:orderId", async (req, res): Promise<void> => {
   res.json(formatOrder(order));
 });
 
-router.put("/orders/:orderId", async (req, res): Promise<void> => {
+// ─── Protected: update order status (store owner of that order, or admin) ─────
+router.put("/orders/:orderId", requireOwner, async (req, res): Promise<void> => {
   const params = UpdateOrderStatusParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -134,8 +143,21 @@ router.put("/orders/:orderId", async (req, res): Promise<void> => {
     return;
   }
 
+  // Fetch the order first to verify store ownership
+  const [existing] = await db.select().from(ordersTable).where(eq(ordersTable.id, params.data.orderId));
+  if (!existing) {
+    res.status(404).json({ error: "Order not found" });
+    return;
+  }
+
+  // Store owners can only update orders for their own store
+  if (req.user!.role === "store_owner" && req.user!.storeId !== existing.storeId) {
+    res.status(403).json({ error: "You can only manage orders for your own store." });
+    return;
+  }
+
   const [order] = await db.update(ordersTable)
-    .set({ status: parsed.data.status })
+    .set({ status: parsed.data.status, updatedAt: new Date() })
     .where(eq(ordersTable.id, params.data.orderId))
     .returning();
 
@@ -144,6 +166,7 @@ router.put("/orders/:orderId", async (req, res): Promise<void> => {
     return;
   }
 
+  // Recalculate store rating when order is delivered
   if (parsed.data.status === "delivered") {
     const deliveredOrders = await db.select().from(ordersTable)
       .where(and(eq(ordersTable.storeId, order.storeId), eq(ordersTable.status, "delivered")));
@@ -160,6 +183,7 @@ router.put("/orders/:orderId", async (req, res): Promise<void> => {
   res.json(formatOrder(order));
 });
 
+// ─── Public: rate an order (customers rate without account) ───────────────────
 router.post("/orders/:orderId/rating", async (req, res): Promise<void> => {
   const params = RateOrderParams.safeParse(req.params);
   if (!params.success) {

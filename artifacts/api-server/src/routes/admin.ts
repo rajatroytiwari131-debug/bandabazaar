@@ -9,6 +9,7 @@ import {
   BlockStoreBody,
   ListCommissionsQueryParams,
 } from "@workspace/api-zod";
+import { requireAdmin } from "../middleware/auth";
 
 const router: IRouter = Router();
 
@@ -51,7 +52,7 @@ function formatOrder(o: typeof ordersTable.$inferSelect) {
   };
 }
 
-router.get("/admin/stores", async (req, res): Promise<void> => {
+router.get("/admin/stores", requireAdmin, async (req, res): Promise<void> => {
   const query = AdminListStoresQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: query.error.message });
@@ -66,7 +67,7 @@ router.get("/admin/stores", async (req, res): Promise<void> => {
   res.json(stores.map(formatStore));
 });
 
-router.post("/admin/stores/:storeId/approve", async (req, res): Promise<void> => {
+router.post("/admin/stores/:storeId/approve", requireAdmin, async (req, res): Promise<void> => {
   const params = ApproveStoreParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -86,7 +87,7 @@ router.post("/admin/stores/:storeId/approve", async (req, res): Promise<void> =>
   res.json(formatStore(store));
 });
 
-router.post("/admin/stores/:storeId/reject", async (req, res): Promise<void> => {
+router.post("/admin/stores/:storeId/reject", requireAdmin, async (req, res): Promise<void> => {
   const params = RejectStoreParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -106,7 +107,7 @@ router.post("/admin/stores/:storeId/reject", async (req, res): Promise<void> => 
   res.json(formatStore(store));
 });
 
-router.post("/admin/stores/:storeId/block", async (req, res): Promise<void> => {
+router.post("/admin/stores/:storeId/block", requireAdmin, async (req, res): Promise<void> => {
   const params = BlockStoreParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -132,7 +133,7 @@ router.post("/admin/stores/:storeId/block", async (req, res): Promise<void> => {
   res.json(formatStore(store));
 });
 
-router.get("/admin/dashboard", async (_req, res): Promise<void> => {
+router.get("/admin/dashboard", requireAdmin, async (_req, res): Promise<void> => {
   const stores = await db.select().from(storesTable);
   const orders = await db.select().from(ordersTable).orderBy(desc(ordersTable.createdAt));
 
@@ -164,7 +165,7 @@ router.get("/admin/dashboard", async (_req, res): Promise<void> => {
   });
 });
 
-router.get("/admin/commissions", async (req, res): Promise<void> => {
+router.get("/admin/commissions", requireAdmin, async (req, res): Promise<void> => {
   const query = ListCommissionsQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: query.error.message });
