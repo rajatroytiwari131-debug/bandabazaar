@@ -1,27 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Header } from "@/components/layout/Header";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { useGetStore, useCreateOrder, useValidateCoupon } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   MapPin, Phone, User, ShoppingBag, Plus, Minus, Trash2,
-  ArrowRight, Tag, CheckCircle, X, Ticket
+  ArrowRight, Tag, CheckCircle, X, Ticket, Lock
 } from "lucide-react";
 
 export default function Cart() {
   const { items, storeId, updateQuantity, removeItem, clearCart, total } = useCart();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user, openAuthModal } = useAuth();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+
+  // Pre-fill delivery details from logged-in user
+  useEffect(() => {
+    if (user) {
+      setName(prev => prev || user.name);
+      setPhone(prev => prev || user.phone);
+    }
+  }, [user]);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -96,6 +105,11 @@ export default function Cart() {
   };
 
   const handlePlaceOrder = () => {
+    // Block guests — open auth modal instead
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
     if (total < minOrder) {
       toast({
         title: "Minimum order not met",
@@ -349,18 +363,28 @@ export default function Cart() {
                 </div>
               )}
 
+              {!user && (
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-3">
+                  <Lock className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-800 font-medium leading-snug">
+                    Login or sign up to place your order — takes 30 seconds!
+                  </p>
+                </div>
+              )}
               <Button
                 className="w-full rounded-full h-12 text-base font-bold shadow-md"
                 size="lg"
-                disabled={total < minOrder || createOrder.isPending}
+                disabled={createOrder.isPending}
                 onClick={handlePlaceOrder}
               >
-                {createOrder.isPending ? "Processing..." : (
+                {createOrder.isPending ? "Processing..." : !user ? (
+                  <><Lock className="h-4 w-4 mr-2" />Login to Place Order</>
+                ) : (
                   <>Place Order <ArrowRight className="h-5 w-5 ml-2" /></>
                 )}
               </Button>
               <p className="text-center text-xs text-muted-foreground mt-3 font-medium">
-                Cash on Delivery (COD) only
+                {user ? "Cash on Delivery (COD) only" : "Free • No spam • Cart saved after login"}
               </p>
             </div>
           </div>
